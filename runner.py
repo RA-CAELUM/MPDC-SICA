@@ -147,6 +147,33 @@ def select_base_agent(
     return 0  # Fallback to first agent if something goes wrong
 
 
+def _docker_local_llm_flags() -> list[str]:
+    """Build Docker flags so sandboxed SICA containers reach the host MPDC Gateway / local Qwen3 server."""
+    gateway_url = os.environ.get("MPDC_GATEWAY_URL", "http://host.docker.internal:8000")
+    if "127.0.0.1" in gateway_url or "localhost" in gateway_url:
+        gateway_url = gateway_url.replace("127.0.0.1", "host.docker.internal").replace(
+            "localhost", "host.docker.internal"
+        )
+    flags = [
+        "--add-host=host.docker.internal:host-gateway",
+        "-e",
+        f"MPDC_GATEWAY_URL={gateway_url}",
+    ]
+    for env_key in (
+        "LOCAL_LLM_BASE_URL",
+        "LOCAL_LLM_MODEL_NAME",
+        "LOCAL_LLM_API_KEY",
+        "AGENT_MODEL",
+        "AGENT_REASONING_MODEL",
+        "AGENT_OVERSIGHT_MODEL",
+        "QWEN3_THINK_TOGGLE",
+    ):
+        val = os.environ.get(env_key)
+        if val:
+            flags.extend(["-e", f"{env_key}={val}"])
+    return flags
+
+
 async def run_docker_command(*args) -> tuple[bool, str, str]:
     """Run a command inside a docker container"""
     logger.debug("Running docker command:")
@@ -323,6 +350,7 @@ Please write a critical analysis of the agent's performance, taking into account
 Keep your analysis concise (no more than 1-2 paragraphs max) but thorough.
 """
 
+    from base_agent.src.config import settings
     summary = await create_completion(
         messages=[
             Message(
@@ -335,7 +363,7 @@ Keep your analysis concise (no more than 1-2 paragraphs max) but thorough.
             ),
             Message(role="user", content=[TextContent(text=summary_prompt)]),
         ],
-        model=Model.GEMINI_FLASH_2,
+        model=settings.OVERSIGHT_MODEL,
     )
 
     # Assume we'll get a single text completion
@@ -420,6 +448,7 @@ async def process_job(
             container_name,
         ]
         container_cmd += ["-p", f"808{worker_id}:8080"]
+        container_cmd += _docker_local_llm_flags()
         # Mount the experiment directory (results/run_{i})
         container_cmd += [
             "-v",
@@ -828,6 +857,7 @@ async def run_meta_agent_benchmark(
         container_cmd = ["docker", "run", "--rm", "-d", "--name", container_name]
         # Map port local:remote for monitoring server
         container_cmd += ["-p", "8080:8080"]
+        container_cmd += _docker_local_llm_flags()
         # Mount the full agent archive as read-only
         container_cmd += ["-v", f"{exp_dir.absolute()}:/home/agent/archive:ro"]
         # Mount the new agent directory as the workdir

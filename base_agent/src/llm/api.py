@@ -10,7 +10,6 @@ import logging
 
 from uuid import uuid4
 from typing import List, Optional, Union, AsyncGenerator, Type
-from google import genai
 from openai import AsyncOpenAI
 from dataclasses import dataclass
 from pydantic import BaseModel
@@ -21,16 +20,7 @@ from .base import (
     CompletionChunk,
 )
 from .metering import token_meter, llm_call_counter
-from .providers import (
-    AnthropicProvider,
-    OpenAIProvider,
-    DeepSeekProvider,
-    FireworksProvider,
-    GoogleProvider,
-    GoogleRESTProvider,
-    GoogleOAIProvider,
-    VertexProvider,
-)
+from .providers.local import LocalOpenAIProvider
 from ..types.common import ArgFormat
 from ..utils.stop_tokens import TOOL_STOP_TOKEN, AGENT_STOP_TOKEN
 from ..utils.parsing import extract_before_last, extract_after_last
@@ -102,6 +92,8 @@ class ModelProvider:
     def _get_gemini_client(cls):
         """Get or create a Google gemini client with API key from env var."""
         if Provider.GOOGLE not in cls._clients:
+            from google import genai
+
             api_key = os.environ.get("GEMINI_API_KEY")
             if not api_key:
                 raise ValueError("Gemini API key not found in settings")
@@ -146,29 +138,39 @@ class ModelProvider:
         if provider not in cls._providers:
             match provider:
                 case Provider.ANTHROPIC:
+                    from .providers import AnthropicProvider
                     client = cls._get_anthropic_client()
                     cls._providers[provider] = AnthropicProvider(client)
                 case Provider.OPENAI:
+                    from .providers import OpenAIProvider
                     client = cls._get_openai_client()
                     cls._providers[provider] = OpenAIProvider(client)
                 case Provider.DEEPSEEK:
+                    from .providers import DeepSeekProvider
                     client = cls._get_deepseek_client()
                     cls._providers[provider] = DeepSeekProvider(client)
                 case Provider.FIREWORKS:
+                    from .providers import FireworksProvider
                     client = cls._get_fireworks_client()
                     cls._providers[provider] = FireworksProvider(client)
                 case Provider.GOOGLE:
+                    from .providers import GoogleProvider
                     client = cls._get_gemini_client()
                     cls._providers[provider] = GoogleProvider(client)
                 case Provider.GOOGLE_OAI:
+                    from .providers import GoogleOAIProvider
                     client = cls._get_gemini_oai_client()
                     cls._providers[provider] = GoogleOAIProvider(client)
                 case Provider.GOOGLE_REST:
+                    from .providers import GoogleRESTProvider
                     key = os.environ.get("GEMINI_API_KEY")
                     cls._providers[provider] = GoogleRESTProvider(api_key=key)
                 case Provider.VERTEX:
+                    from .providers import VertexProvider
                     client = cls._get_vertex_client()
                     cls._providers[provider] = VertexProvider(client)
+                case Provider.LOCAL:
+                    cls._providers[provider] = LocalOpenAIProvider()
                 case _:
                     raise ValueError(f"Unexpected provider: {provider}")
         return cls._providers[provider]
@@ -234,7 +236,7 @@ def get_tool_documentation(
 
 async def create_completion(
     messages: List[Message],
-    model: Model = Model.SONNET_37,
+    model: Model = Model.QWEN3,
     temperature: float = 0.7,
     max_tokens: int | None = None,
     stop: str | list[str] | None = None,
@@ -427,7 +429,7 @@ async def create_completion(
 
 async def create_streaming_completion(
     messages: List[Message],
-    model: Model = Model.SONNET_37,
+    model: Model = Model.QWEN3,
     temperature: float = 0.7,
     max_tokens: Optional[int] = None,
     stop: Optional[Union[str, List[str]]] = None,

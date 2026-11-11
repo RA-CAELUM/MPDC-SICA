@@ -176,12 +176,20 @@ class BaseProvider(ABC):
                     raw_response={"error": str(e)},
                 )
 
-        # The last response may contain non-text content types
-        response_content: list[ContentTypes] = [TextContent(text=accumulated_text_content)]
+        # The last response may contain non-text content types.
+        # Keep ReasoningContent before TextContent so completion.content[-1] remains TextContent for XML tool parsing.
+        from ...types.llm_types import ReasoningContent
+        leading_blocks: list[ContentTypes] = []
+        trailing_blocks: list[ContentTypes] = []
         if response is not None:
             for block in response.content:
-                if not isinstance(block, TextContent):
-                    response_content.append(block)
+                if isinstance(block, ReasoningContent):
+                    leading_blocks.append(block)
+                elif not isinstance(block, TextContent):
+                    trailing_blocks.append(block)
+        response_content: list[ContentTypes] = (
+            leading_blocks + [TextContent(text=accumulated_text_content)] + trailing_blocks
+        )
         # Get final stop information
         stop_reason = response.stop_reason if response is not None else StopReason.COMPLETE
         stop_sequence = response.stop_sequence if response is not None else None

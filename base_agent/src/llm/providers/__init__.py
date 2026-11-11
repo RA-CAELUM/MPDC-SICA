@@ -5,15 +5,36 @@
 # LICENSE file in the root directory of this source tree.
 """Provider-specific implementations for different LLM services."""
 
-from .anthropic import AnthropicProvider
-from .openai import OpenAIProvider
-from .deepseek import DeepSeekProvider
-from .fireworks import FireworksProvider
+from .local import LocalOpenAIProvider
 
-from .google import GoogleProvider
-from .google_rest import GoogleRESTProvider
-from .google_oai import GoogleOAIProvider
-from .vertex import VertexProvider
+
+def __getattr__(name: str):
+    if name == "AnthropicProvider":
+        from .anthropic import AnthropicProvider
+        return AnthropicProvider
+    if name == "OpenAIProvider":
+        from .openai import OpenAIProvider
+        return OpenAIProvider
+    if name == "DeepSeekProvider":
+        from .deepseek import DeepSeekProvider
+        return DeepSeekProvider
+    if name == "FireworksProvider":
+        from .fireworks import FireworksProvider
+        return FireworksProvider
+    if name == "GoogleProvider":
+        from .google import GoogleProvider
+        return GoogleProvider
+    if name == "GoogleRESTProvider":
+        from .google_rest import GoogleRESTProvider
+        return GoogleRESTProvider
+    if name == "GoogleOAIProvider":
+        from .google_oai import GoogleOAIProvider
+        return GoogleOAIProvider
+    if name == "VertexProvider":
+        from .vertex import VertexProvider
+        return VertexProvider
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "AnthropicProvider",
@@ -24,4 +45,5 @@ __all__ = [
     "GoogleRESTProvider",
     "GoogleOAIProvider",
     "VertexProvider",
+    "LocalOpenAIProvider",
 ]

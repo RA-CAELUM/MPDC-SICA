@@ -14,7 +14,6 @@ import logging
 from enum import Enum
 from typing import Type, Any, Union, get_args, get_origin, Literal
 from pydantic import BaseModel
-from json_repair import repair_json
 
 from .representation import get_json_schema_representation
 
@@ -199,6 +198,7 @@ async def json_str_to_dict(
 
     # 2. If failed, attempt to repair using json_repair
     try:
+        from json_repair import repair_json
         repair_result = repair_json(json_str, return_objects=True, logging=True)
         if isinstance(repair_result, tuple):
             repaired_obj, repair_logs = repair_result
@@ -262,8 +262,9 @@ async def json_str_to_dict(
     from ..llm.api import create_completion
     from ..llm.base import Message
     from ..types.llm_types import Model, TextContent
+    from ..config import settings
     if repair_model is None:
-        repair_model = Model.SONNET_37
+        repair_model = settings.MODEL
 
     target_schema = get_json_schema_representation(guide_obj)
     sys_prompt = "You are an AI assistant specializing in reformatting malformed JSON strings into valid JSON that adheres to a specific schema."

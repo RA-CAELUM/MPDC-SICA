@@ -184,6 +184,7 @@ class Provider(Enum):
     GOOGLE_OAI = auto()
     GOOGLE_REST = auto()
     VERTEX = auto()
+    LOCAL = auto()
 
 
 @dataclass(frozen=True)
@@ -448,6 +449,57 @@ class Model(Enum):
         preferred_arg_format=ArgFormat.JSON,
     )
 
+    QWEN3 = ModelInfo(
+        api_name="Qwen/Qwen3-30B-A3B",
+        provider=Provider.LOCAL,
+        costs=TokenCost(
+            input_uncached=0.0,
+            input_cached=0.0,
+            cache_write=0.0,
+            output=0.0,
+        ),
+        max_tokens=16384,
+        supports_caching=True,
+        reasoning_model=False,
+        context_window=65536,
+        function_calling_interface=FCI.UNCONSTRAINED,
+        preferred_arg_format=ArgFormat.XML,
+    )
+
+    QWEN3_CODER = ModelInfo(
+        api_name="Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        provider=Provider.LOCAL,
+        costs=TokenCost(
+            input_uncached=0.0,
+            input_cached=0.0,
+            cache_write=0.0,
+            output=0.0,
+        ),
+        max_tokens=16384,
+        supports_caching=True,
+        reasoning_model=False,
+        context_window=65536,
+        function_calling_interface=FCI.UNCONSTRAINED,
+        preferred_arg_format=ArgFormat.XML,
+    )
+
+    QWEN3_REASONER = ModelInfo(
+        api_name="Qwen/Qwen3-30B-A3B",
+        provider=Provider.LOCAL,
+        costs=TokenCost(
+            input_uncached=0.0,
+            input_cached=0.0,
+            cache_write=0.0,
+            output=0.0,
+        ),
+        max_tokens=32768,
+        supports_caching=True,
+        reasoning_model=True,
+        context_window=65536,
+        function_calling_interface=FCI.UNCONSTRAINED,
+        preferred_arg_format=ArgFormat.XML,
+    )
+
     @property
     def id(self) -> str:
         """Get the model identifier string used in API calls."""
@@ -527,4 +579,7 @@ MODEL_FAILOVER_MAP = {
     Model.FIREWORKS_DEEPSEEK_R1: Model.O1,
     Model.GEMINI_FLASH_2: Model.HAIKU_35,
     Model.GEMINI_25_PRO: Model.GEMINI_25_PRO,
+    Model.QWEN3: Model.QWEN3_CODER,
+    Model.QWEN3_CODER: Model.QWEN3,
+    Model.QWEN3_REASONER: Model.QWEN3,
 }

@@ -167,7 +167,7 @@ class OpenAIProvider(BaseProvider):
             "top_p": top_p,
             "max_completion_tokens": max_tokens or model.max_output_tokens,
         }
-        if Model.is_reasoner:
+        if model.is_reasoner:
             args.pop("temperature")
             args.pop("top_p")
 

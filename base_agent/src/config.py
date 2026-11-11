@@ -14,15 +14,18 @@ class Settings(BaseSettings):
     NAME: str = "self_referential_agent"
     LOG_LEVEL: str = "INFO"
 
-    MODEL: Model = Model.SONNET_37
-    REASONING_MODEL: Model = Model.O3_MINI
-    OVERSIGHT_MODEL: Model = Model.SONNET_37
+    MODEL: Model = Model.QWEN3
+    REASONING_MODEL: Model = Model.QWEN3_REASONER
+    OVERSIGHT_MODEL: Model = Model.QWEN3
 
     @field_validator("MODEL", "REASONING_MODEL", "OVERSIGHT_MODEL", mode="before")
     def parse_model(cls, value):
-        """Convert a string model name into a Model enum instance."""
+        """Convert a string model name or API name into a Model enum instance."""
         if isinstance(value, str):
-            return Model.from_name(value)
+            try:
+                return Model.from_name(value)
+            except ValueError:
+                return Model.from_api_name(value)
         elif isinstance(value, Model):
             return value
         raise ValueError(f"Invalid model value: {value!r}")
