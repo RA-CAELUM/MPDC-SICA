@@ -1,6 +1,10 @@
+<div align="center">
+  <img src="./assets/sica-banner.svg" alt="MPDC - Man Portable Data Center" width="480">
+</div>
+
 <p align="center">
-  <h1 align="center">Self-Improving Coding Agent</h1>
-  <p align="center">A coding agent experiment, that works on its own codebase.</p>
+  <h1 align="center">MPDC-SICA: Self-Improving Coding Agent</h1>
+  <p align="center">A self-referential coding agent that evaluates and improves its own codebase — running natively on local <b>Qwen3</b> via the MPDC Gateway.</p>
   <p align="center">
     <img src="figures/agent_loop.png" alt="Agent Loop" width="80%"/>
   </p>
@@ -31,6 +35,13 @@ these in your _local_ shell, which you can do either directly or with `direnv`,
 models unavailable to the agent.
 
 ```bash
+# Local MPDC / Qwen3 (Default — no cloud API keys required)
+export MPDC_GATEWAY_URL="http://127.0.0.1:8000"  # Or set LOCAL_LLM_BASE_URL="http://127.0.0.1:8001/v1"
+export AGENT_MODEL="QWEN3"                       # Options: QWEN3, QWEN3_CODER, QWEN3_REASONER
+export AGENT_REASONING_MODEL="QWEN3_REASONER"
+export AGENT_OVERSIGHT_MODEL="QWEN3"
+
+# Optional Cloud Providers
 export ANTHROPIC_API_KEY=  # For Claude models
 export OPENAI_API_KEY=  # For GPT 4o and reasoning models (o1, o3, etc)
 export GEMINI_API_KEY=  # For Gemini models
